@@ -658,7 +658,7 @@
     }
 
     const encoded = encodeText(raw);
-    const url = location.origin + location.pathname + '?jp=' + encoded;
+    const url = location.origin + location.pathname + '?jp=' + encodeURIComponent(encoded);
 
     qrcodeDiv.innerHTML = '';
     new QRCode(qrcodeDiv, {
