@@ -645,13 +645,40 @@
     return decodeURIComponent(escape(atob(b64)));
   }
 
+  let qrInstance = null;
+
+  function renderQr(url){
+    if(qrInstance){
+      // Reuse the existing QR object: clear its content and draw the new
+      // code into it. Re-creating a brand new QRCode() on the same element
+      // repeatedly is unreliable in this library and can fail silently
+      // after the first render.
+      try{
+        qrInstance.clear();
+        qrInstance.makeCode(url);
+        return;
+      }catch(e){
+        // fall through to a full rebuild if the instance got into a bad state
+        qrInstance = null;
+      }
+    }
+    qrcodeDiv.innerHTML = '';
+    qrInstance = new QRCode(qrcodeDiv, {
+      text: url,
+      width: 180,
+      height: 180,
+      colorDark: '#262220',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L
+    });
+  }
+
   qrBtn.addEventListener('click', () => {
     const raw = pastebox.value.trim();
     if(!raw){
       qrNote.style.color = '#b7282b';
       qrNote.textContent = '請先貼上 ChatGPT 的回答，再產生 QR Code。';
       qrResult.style.display = 'block';
-      qrcodeDiv.innerHTML = '';
       qrLink.textContent = '';
       pastebox.focus();
       return;
@@ -660,15 +687,7 @@
     const encoded = encodeText(raw);
     const url = location.origin + location.pathname + '?jp=' + encodeURIComponent(encoded);
 
-    qrcodeDiv.innerHTML = '';
-    new QRCode(qrcodeDiv, {
-      text: url,
-      width: 180,
-      height: 180,
-      colorDark: '#262220',
-      colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.L
-    });
+    renderQr(url);
 
     qrLink.textContent = url;
     qrResult.style.display = 'block';
